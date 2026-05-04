@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TERMUX PRO — Android Dev Beast</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;800&family=Syne:wght@400;600;800&display=swap');
+
+  :root {
+    --bg: #050810;
+    --bg2: #090d1a;
+    --card: #0d1224;
+    --border: #1a2545;
+    --green: #00ff88;
+    --cyan: #00d4ff;
+    --orange: #ff6b35;
+    --yellow: #ffd93d;
+    --purple: #a855f7;
+    --red: #ff4757;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --dim: #1e2d4a;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Animated grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,255,136,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,255,136,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Glow orbs */
+  .orb {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(120px);
+    pointer-events: none;
+    z-index: 0;
+    animation: float 8s ease-in-out infinite;
+  }
+  .orb1 { width: 400px; height: 400px; background: rgba(0,255,136,0.06); top: -100px; left: -100px; }
+  .orb2 { width: 300px; height: 300px; background: rgba(0,212,255,0.05); bottom: 10%; right: -50px; animation-delay: -4s; }
+  .orb3 { width: 200px; height: 200px; background: rgba(168,85,247,0.06); top: 50%; left: 50%; animation-delay: -2s; }
+  @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-30px)} }
+
+  .wrapper { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 0 20px 60px; }
+
+  /* HEADER */
+  header {
+    padding: 50px 0 40px;
+    text-align: center;
+    position: relative;
+  }
+  .badge {
+    display: inline-block;
+    background: linear-gradient(135deg, rgba(0,255,136,0.15), rgba(0,212,255,0.15));
+    border: 1px solid rgba(0,255,136,0.3);
+    color: var(--green);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 3px;
+    padding: 6px 16px;
+    border-radius: 2px;
+    margin-bottom: 20px;
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100%{box-shadow:0 0 0 0 rgba(0,255,136,0.3)} 50%{box-shadow:0 0 20px 4px rgba(0,255,136,0.2)} }
+
+  h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(36px, 8vw, 72px);
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -2px;
+    background: linear-gradient(135deg, #fff 0%, var(--green) 50%, var(--cyan) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 8px;
+  }
+  .subtitle {
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--muted);
+    font-size: 13px;
+    letter-spacing: 2px;
+  }
+
+  /* STATS BAR */
+  .stats {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin: 30px 0 50px;
+  }
+  .stat {
+    background: var(--card);
+    border: 1px solid var(--border);
+    padding: 10px 20px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+  }
+  .stat-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); animation: blink 1.5s ease-in-out infinite; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  /* PHASE SECTIONS */
+  .phase {
+    margin-bottom: 50px;
+    opacity: 0;
+    transform: translateY(30px);
+    animation: fadeUp 0.6s ease forwards;
+  }
+  @keyframes fadeUp { to { opacity:1; transform:translateY(0); } }
+
+  .phase-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .phase-num {
+    width: 44px; height: 44px;
+    border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 800;
+    font-size: 15px;
+    flex-shrink: 0;
+  }
+  .phase-title { font-size: 20px; font-weight: 800; }
+  .phase-desc { font-size: 13px; color: var(--muted); margin-top: 2px; font-family: 'JetBrains Mono', monospace; }
+
+  /* COLOR THEMES PER PHASE */
+  .theme-green .phase-num { background: rgba(0,255,136,0.15); color: var(--green); border: 1px solid rgba(0,255,136,0.3); }
+  .theme-green .phase-title { color: var(--green); }
+  .theme-cyan .phase-num { background: rgba(0,212,255,0.15); color: var(--cyan); border: 1px solid rgba(0,212,255,0.3); }
+  .theme-cyan .phase-title { color: var(--cyan); }
+  .theme-orange .phase-num { background: rgba(255,107,53,0.15); color: var(--orange); border: 1px solid rgba(255,107,53,0.3); }
+  .theme-orange .phase-title { color: var(--orange); }
+  .theme-yellow .phase-num { background: rgba(255,217,61,0.15); color: var(--yellow); border: 1px solid rgba(255,217,61,0.3); }
+  .theme-yellow .phase-title { color: var(--yellow); }
+  .theme-purple .phase-num { background: rgba(168,85,247,0.15); color: var(--purple); border: 1px solid rgba(168,85,247,0.3); }
+  .theme-purple .phase-title { color: var(--purple); }
+  .theme-red .phase-num { background: rgba(255,71,87,0.15); color: var(--red); border: 1px solid rgba(255,71,87,0.3); }
+  .theme-red .phase-title { color: var(--red); }
+
+  /* COMMAND BLOCKS */
+  .cmd-block {
+    background: #06090f;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    margin-bottom: 14px;
+    overflow: hidden;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .cmd-block:hover { border-color: rgba(0,255,136,0.25); box-shadow: 0 0 20px rgba(0,255,136,0.05); }
+
+  .cmd-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    user-select: none;
+  }
+  .cmd-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .cmd-dots { display: flex; gap: 5px; }
+  .cmd-dots span { width: 8px; height: 8px; border-radius: 50%; }
+  .cmd-dots .d1 { background: #ff5f57; }
+  .cmd-dots .d2 { background: #ffbd2e; }
+  .cmd-dots .d3 { background: #28c840; }
+
+  .copy-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    padding: 4px 10px;
+    border-radius: 3px;
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: all 0.2s;
+  }
+  .copy-btn:hover { border-color: var(--green); color: var(--green); }
+  .copy-btn.copied { border-color: var(--green); color: var(--green); background: rgba(0,255,136,0.1); }
+
+  .cmd-body {
+    padding: 16px 18px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    line-height: 1.8;
+    overflow-x: auto;
+  }
+  .cmd-body .prompt { color: var(--green); font-weight: 600; margin-right: 4px; }
+  .cmd-body .comment { color: var(--muted); font-style: italic; }
+  .cmd-body .cmd { color: var(--text); }
+  .cmd-body .flag { color: var(--cyan); }
+  .cmd-body .str { color: var(--yellow); }
+  .cmd-body .pkg { color: var(--orange); }
+  .cmd-body .section {
+    color: var(--purple);
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    display: block;
+    margin: 12px 0 4px;
+    border-top: 1px solid var(--dim);
+    padding-top: 10px;
+  }
+  .cmd-body .section:first-child { margin-top: 0; border-top: none; padding-top: 0; }
+
+  /* GRID CARDS */
+  .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; margin-bottom: 20px; }
+  .info-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 18px;
+    transition: transform 0.2s, border-color 0.2s;
+  }
+  .info-card:hover { transform: translateY(-2px); border-color: rgba(0,212,255,0.25); }
+  .info-card h4 { font-size: 13px; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+  .info-card ul { list-style: none; }
+  .info-card li {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    padding: 4px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .info-card li:last-child { border-bottom: none; }
+  .info-card li::before { content: '→'; color: var(--green); font-size: 10px; flex-shrink: 0; }
+
+  /* TIPS */
+  .tip {
+    background: rgba(0,255,136,0.05);
+    border: 1px solid rgba(0,255,136,0.2);
+    border-left: 3px solid var(--green);
+    padding: 14px 16px;
+    border-radius: 0 4px 4px 0;
+    font-size: 13px;
+    margin-bottom: 16px;
+    font-family: 'JetBrains Mono', monospace;
+    color: rgba(226,232,240,0.8);
+  }
+  .tip.warn {
+    background: rgba(255,107,53,0.05);
+    border-color: rgba(255,107,53,0.2);
+    border-left-color: var(--orange);
+  }
+  .tip.info {
+    background: rgba(0,212,255,0.05);
+    border-color: rgba(0,212,255,0.2);
+    border-left-color: var(--cyan);
+  }
+
+  /* PROGRESS TRACKER */
+  .progress-bar {
+    position: fixed;
+    top: 0; left: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--green), var(--cyan));
+    z-index: 999;
+    transition: width 0.1s;
+    box-shadow: 0 0 8px rgba(0,255,136,0.5);
+  }
+
+  /* FOOTER */
+  footer {
+    text-align: center;
+    padding: 40px 0;
+    border-top: 1px solid var(--border);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 2px;
+  }
+
+  /* Stagger animations */
+  .phase:nth-child(1) { animation-delay: 0.1s; }
+  .phase:nth-child(2) { animation-delay: 0.2s; }
+  .phase:nth-child(3) { animation-delay: 0.3s; }
+  .phase:nth-child(4) { animation-delay: 0.4s; }
+  .phase:nth-child(5) { animation-delay: 0.5s; }
+  .phase:nth-child(6) { animation-delay: 0.6s; }
+  .phase:nth-child(7) { animation-delay: 0.7s; }
+  .phase:nth-child(8) { animation-delay: 0.8s; }
+
+  @media (max-width: 600px) {
+    .cmd-body { font-size: 11px; }
+    .card-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progress"></div>
+<div class="orb orb1"></div>
+<div class="orb orb2"></div>
+<div class="orb orb3"></div>
+
+<div class="wrapper">
+
+  <header>
+    <div class="badge">⚡ TERMUX MASTERY GUIDE v2.0</div>
+    <h1>TERMUX<br>PRO BEAST</h1>
+    <p class="subtitle">// ANDROID → FULL STACK SERVER + HACKING LAB + AI ENGINE</p>
+  </header>
+
+  <div class="stats">
+    <div class="stat"><span class="stat-dot"></span> 8 POWER MODULES</div>
+    <div class="stat"><span class="stat-dot" style="background:var(--cyan)"></span> 100+ COMMANDS</div>
+    <div class="stat"><span class="stat-dot" style="background:var(--orange)"></span> PRODUCTION READY</div>
+    <div class="stat"><span class="stat-dot" style="background:var(--purple)"></span> ETHICAL HACKING</div>
+  </div>
+
+  <!-- ══════════════ PHASE 0: BOOTSTRAP ══════════════ -->
+  <div class="phase theme-green">
+    <div class="phase-header">
+      <div class="phase-num">00</div>
+      <div>
+        <div class="phase-title">🚀 BOOTSTRAP — First Time Setup</div>
+        <div class="phase-desc">// Run this FIRST on any fresh Termux install</div>
+      </div>
+    </div>
+
+    <div class="tip">⚡ Install Termux from F-Droid (NOT Play Store) for full package support: <strong>f-droid.org</strong></div>
+
+    <div class="cmd-block">
+      <div class="cmd-header">
+        <div class="cmd-label"><div class="cmd-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div> bootstrap.sh — Run First</div>
+        <button class="copy-btn" onclick="copyCmd(this, 'bootstrap')">COPY</button>
+      </div>
+      <div class="cmd-body" id="bootstrap">
+        <span class="comment"># ═══ STEP 1: Update everything ═══</span><br>
+        <span class="prompt">$</span><span class="cmd"> pkg update <span class="flag">-y</span> && pkg upgrade <span class="flag">-y</span></span><br><br>
+        <span class="comment"># ═══ STEP 2: Core tools ═══</span><br>
+        <span class="prompt">$</span><span class="cmd"> pkg install <span class="flag">-y</span> <span class="pkg">git curl wget nano vim zsh bash</span></span><br><br>
+        <span class="comment"># ═══ STEP 3: Allow storage access ═══</span><br>
+        <span class="prompt">$</span><span class="cmd"> termux-setup-storage</span><br><br>
+        <span class="comment"># ═══ STEP 4: Install Oh My Zsh (pro terminal) ═══</span><br>
+        <span class="prompt">$</span><span class="cmd"> sh <span class="flag">-c</span> <span class="str">"$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"</span></span><br><br>
+        <span class="comment"># ═══ STEP 5: Set Zsh as default shell ═══</span><br>
+        <span class="prompt">$</span><span class="cmd"> chsh <span class="flag">-s</span> zsh</span><br><br>
+        <span class="comment"># ═══ STEP 6: Install essential build tools ═══</span><br>
+        <span class="prompt">$</span><span class="cmd"> pkg install <span class="flag">-y</span> <span class="pkg">build-essential make cmake clang</span></span><br><br>
+        <span class="comment"># ═══ STEP 7: Install openssh (use your phone via SSH) ═══</span><br>
+        <span class="prompt">$</span><span class="cmd"> pkg install <span class="flag">-y</span> <span class="pkg">openssh</span> && sshd</span>
+      </div>
+    </div>
+
+    <div class="tip info">💡 After bootstrap: type <strong>zsh</strong> to switch to your new pro shell. Your terminal will look 10x better.</div>
+  </div>
+
+  <!-- ══════════════ PHASE 1: DEV ENVIRONMENT ══════════════ -->
+  <div class="phase theme-cyan">
+    <div class="phase-header">
+      <div class="phase-num">01</div>
+      <div>
+        <div class="phase-title">🧑‍💻 Full Development Environment</div>
+        <div class="phase-desc">// Python · Node.js · Rust · C · APIs · Backend</div>
+      </div>
+    </div>
+
+    <div class="cmd-block">
+      <div class="cmd-header">
+        <div class="cmd-label"><div class="cmd-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div> dev-environment.sh</div>
+        <button class="copy-btn" onclick="copyCmd(this, 'dev')">COPY</button>
+      </div>
+      <div class="cmd-body" id="dev">
+        <span class="section">── PYTHON FULL STACK ──</span>
+        <span class="prompt">$</span><span class="cmd"> pkg install <span class="flag">-y</span> <span class="pkg">python</span></span><br>
+        <span class="prompt">$</span><span class="cmd"> pip install <span class="pkg">flask fastapi uvicorn requests httpx pandas numpy sqlalchemy</span></span><br>
+        <span class="prompt">$</span><span class="cmd"> pip install <span class="pkg">django djangorestframework celery redis</span></span><br><br>
+        <span class="section">── NODE.JS + JAVASCRIPT ──</span>
+        <span class="prompt">$</span><span class="cmd"> pkg install <span class="flag">-y</span> <span class="pkg">nodejs</span></span><br>
+        <span class="prompt">$</span><span class="cmd"> npm install <span class="flag">-g</span> <span class="pkg">express nodemon pm2 typescript ts-node</span></span><br>
+        <span class="prompt">$</span><span class="cmd"> npm install <span class="flag">-g</span> <span class="pkg">@nestjs/cli create-react-app next</span></span><br><br>
+        <span class="section">── RUST (blazing fast) ──</span>
+        <span class="prompt">$</span><span class="cmd"> pkg install <span class="flag">-y</span> <span class="pkg">rust</span></span><br>
+        <span class="prompt">$</span><span class="cmd"> rustup component add rustfmt clippy</span><br><br>
+        <span class="section">── C / C++ ──</span>
+        <span class="prompt">$</span><span class="cmd"> pkg install <span class="flag">-y</span> <span class="pkg">clang gcc gdb valgrind</span></span><br><br>
+        <span class="section">── API TESTING ──</span>
+        <span class="prompt">$</span><span class="cmd"> pkg install <span class="flag">-y</span> <span class="pkg">httpie</span></span><br>
+        <span class="prompt">$</span><span class="cmd"> pip install <span class="pkg">pytest locust</span></span><br><br>
+        <span class="section">── RUN A NODE SERVER ──</span>
+        <span class="prompt">$</span><span class="cmd"> mkdir myapp && cd myapp && npm init <span class="flag">-y</span></span><br>
+        <span class="prompt">$</span><span class="cmd"> echo <span class="str">"const e=require('express');const a=e();a.get('/',(r,s)=>s.send('🔥 Server running from Android!'));a.listen(3000)"</span> > index.js</span><br>
+        <span class="prompt">$</span><span class="cmd"> node index.js</span>
+      </div>
+    </div>
+
+    <div class="card-grid">
+      <div class="info-card">
+        <h4 style="color:var(--cyan)">⚡ PM2 Process Manager</h4>
+        <ul>
+          <li>pm2 start app.js — start app</li>
+          <li>pm2 list — see all processes</li>
+          <li>pm2 logs — live logs</li>
+          <li>pm2 restart app — restart</li>
+          <li>pm2 stop all — stop all</li>
+        </ul>
+      </div>
+      <div class="info-card">
+        <h4 style="color:var(--cyan)">🐍 Quick FastAPI Server</h4>
+        <ul>
+          <li>pip install fastapi uvicorn</li>
+          <li>Create main.py with @app.get("/")</li>
+          <li>uvicorn main:app --reload</li>
+          <li>Access: localhost:8000</li>
+          <li>Docs: localhost:8000/docs</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════ PHASE 2: WEB HOSTING ══════════════ -->
+  <div class="phase theme-orange">
+    <div class="phase-header">
+      <div class="phase-num">02</div>
+      <div>
+        <div class="phase-title">🌐 Web Hosting — Apache / Nginx / PHP</div>
+        <div class="phase-desc">// Host portfolios · dashboards · DVWA · PHP apps</div>
+      </div>
+    </div>
+
+    <div class="cmd-block">
+      <div class="cmd-header">
+        <div class="cmd-label"><div class="cmd-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div> web-server.sh</div>
+        <button class="copy-btn" onclick="copyCmd(this, 'web')">COPY</button>
+      </div>
+      <div class="cmd-body" id="web">
+        <span class="section">── NGINX SERVER ──</span>
+        <span class="prompt">$</span><span class="cmd"> pkg install <span class="flag">-y</span> <span class="pkg">nginx</span></span><br>
+        <span class="prompt">$</span><span class="cmd"> nginx</span><span class="comment">  # start server on port 8080</span><br>
+        <span class="prompt">$</span><span class="cmd"> nginx <span class="flag">-s</span> reload</span><span class="comment">  # reload config</span><br>
+        <span class="prompt">$</span><span class="cmd"> nginx <span class="flag">-s</span> stop</span><br><br>
+        <span class="section">── PHP + APACHE ──</span>
+        <span class="prompt">$</span><span class="cmd"> pkg install <span class="flag">-y</span> <span class="pkg">apache2 php php-apache</span></span><br>
+        <span class="prompt">$</span><span class="cmd"> echo <span class="str">"<?php phpinfo(); ?>"</span> > $PREFIX/share/apache2/default-site/htdocs/info.php</span><br>
+        <span class="prompt">$</span><span class="cmd"> apachectl start</span><br><br>
+        <span class="section">── MARIADB (MySQL) ──</span>
+        <span class="prompt">$</span><span class="cmd"> pkg install <span class="flag">-y</span> <span class="pkg">mariadb</span></span><br>
+        <span class="prompt">$</span><span class="cmd"> mysql_install_db</span><br>
+        <span class="prompt">$</span><span class="cmd"> mysqld_safe <span class="flag">--datadir</span>=$PREFIX/var/lib/mysql &</span><br>
+        <span class="prompt">$</span><span class="cmd"> mysql <span class="flag">-u</span> root</span><br><br>
+        <span class="section">── DVWA HACKING LAB ──</span>
+        <span class="prompt">$</span><span class="cmd"> cd $PREFIX/share/apache2/default-site/htdocs</span><br>
+        <span class="prompt">$</span><span class="cmd"> git clone https://github.com/digininja/DVWA.git dvwa</span><br>
+        <span class="prompt">$</span><span class="cmd"> cp dvwa/config/config.inc.php.dist dvwa/config/config.inc.php</span><br>
+        <span class="prompt">$</span><span class="cmd"> nano dvwa/config/config.inc.php</span><span class="comment">  # set DB credentials</span><br><br>
+        <span class="section">── NGROK (expose to internet) ──</span>
+        <span class="prompt">$</span><span class="cmd"> pkg install <span class="flag">-y</span> <span class="pkg">tsu</span></span><br>
+        <span class="prompt">$</span><span class="cmd"> wget https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-linux-arm.tgz</span><br>
+        <span class="prompt">$</span><span class="cmd"> tar <span class="flag">-xzf</span> ngrok-v3-stable-linux-arm.tgz</span><br>
+        <span class="prompt">$</span><span class="cmd"> ./ngrok http 8080</span><span class="comment">  # get public URL!</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════ PHASE 3: AUTOMATION & BOTS ══════════════ -->
+  <div class="phase theme-yellow">
+    <div class="phase-header">
+      <div class="phase-num">03</div>
+      <div>
+        <div class="phase-title">🤖 Automation & Bots — Money Makers</div>
+        <div class="phase-desc">// Telegram bots · Web scrapers · Cron jobs · WhatsApp</div>
+      </div>
+    </div>
+
+    <div class="cmd-block">
+      <div class="cmd-header">
+        <div class="cmd-label"><div class="cmd-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div> automation.sh</div>
+        <button class="copy-btn" onclick="copyCmd(this, 'auto')">COPY</button>
+      </div>
+      <div class="cmd-body" id="auto">
+        <span class="section">── TELEGRAM BOT ──</span>
+        <span class="prompt">$</span><span class="cmd"> pip install <span class="pkg">python-telegram-bot aiogram requests</span></span><br>
+        <span class="comment"># Create bot.py and run it — talk to @BotFather first</span><br>
+        <span class="prompt">$</span><span class="cmd"> python bot.py &</span><span class="comment">  # run in background</span><br><br>
+        <span class="section">── WEB SCRAPER STACK ──</span>
+        <span class="prompt">$</span><span class="cmd"> pip install <span class="pkg">scrapy beautifulsoup4 selenium playwright</span></span><br>
+        <span class="prompt">$</span><span class="cmd"> pip install <span class="pkg">cloudscraper httpx[http2] fake-useragent</span></span><br>
+        <span class="prompt">$</span><span class="cmd"> scrapy startproject mybot</span><br><br>
+        <span class="section">── CRON JOBS (scheduled tasks) ──</span>
+        <span class="prompt">$</span><span class="cmd"> pkg install <span class="flag">-y</span> <span class="pkg">cronie</span></span><br>
+        <span class="prompt">$</span><span class="cmd"> crond</span><span class="comment">  # start cron daemon</span><br>
+        <span class="prompt">$</span><span class="cmd"> crontab <span class="flag">-e</span></span><br>
+        <span class="comment"># Add: */30 * * * * python /data/data/bot.py >> /tmp/bot.log 2>&1</span><br><br>
+        <span class="section">── WHATSAPP VIA TWILIO API ──</span>
+        <span class="prompt">$</span><span class="cmd"> pip install <span class="pkg">twilio flask</span></span><br>
+        <span class="comment"># Use Twilio sandbox for free WhatsApp messaging</span><br><br>
+        <span class="section">── TASK SCHEDULER WITH CELERY ──</span>
+        <span class="prompt">$</span><span class="cmd"> pip install <span class="pkg">celery redis flower</span></span><br>
+        <span class="prompt">$</span><span class="cmd"> pkg install <span class="flag">-y</span> <span class="pkg">redis</span> && redis-server &</span><br>
+        <span class="prompt">$</span><span class="cmd"> celery <span class="flag">-A</span> tasks worker <span class="flag">--loglevel</span>=info</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════ PHASE 4: CYBERSECURITY ══════════════ -->
+  <div class="phase theme-red">
+    <div class="phase-header">
+      <div class="phase-num">04</div>
+      <div>
+        <div class="phase-title">🔐 Cybersecurity / Ethical Hacking Lab</div>
+        <div class="phase-desc">// nmap · sqlmap · hydra · netcat · ONLY ON YOUR OWN SYSTEMS</div>
+      </div>
+    </div>
+
+    <div class="tip warn">⚠️ ETHICAL USE ONLY. Only scan/test systems you OWN or have written permission for. Unauthorized hacking = crime.</div>
+
+    <div class="cmd-block">
+      <div class="cmd-header">
+        <div class="cmd-label"><div class="cmd-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div> cybersec-lab.sh</div>
+        <button class="copy-btn" onclick="copyCmd(this, 'cyber')">COPY</button>
+      </div>
+      <div class="cmd-body" id="cyber">
+        <span class="section">── NETWORK TOOLS ──</span>
+        <span class="prompt">$</span><span class="cmd"> pkg install <span class="flag">-y</span> <span class="pkg">nmap netcat-openbsd dnsutils whois</span></span><br>
+        <span class="prompt">$</span><span class="cmd"> pkg install <span class="flag">-y</span> <span class="pkg">ncat ncrack masscan</span></span><br>
+        <span class="prompt">$</span><span class="cmd"> nmap <span class="flag">-sV -p 1-1000</span> localhost</span><span class="comment">  # scan localhost</span><br>
+        <span class="prompt">$</span><span class="cmd"> nmap <span class="flag">-A -T4</span> 192.168.1.1</span><span class="comment">  # your own router</span><br><br>
+        <span class="section">── SQLMAP (SQL injection testing) ──</span>
+        <span class="prompt">$</span><span class="cmd"> pkg install <span class="flag">-y</span> <span class="pkg">python sqlmap</span></span><br>
+        <span class="comment"># Test against your DVWA:</span><br>
+        <span class="prompt">$</span><span class="cmd"> sqlmap <span class="flag">-u</span> <span class="str">"http://localhost/dvwa/vulnerabilities/sqli/?id=1&Submit=Submit"</span> <span class="flag">--cookie</span>=<span class="str">"PHPSESSID=xxx;security=low"</span> <span class="flag">--dbs</span></span><br><br>
+        <span class="section">── METASPLOIT FRAMEWORK ──</span>
+        <span class="prompt">$</span><span class="cmd"> pkg install <span class="flag">-y</span> <span class="pkg">unstable-repo</span></span><br>
+        <span class="prompt">$</span><span class="cmd"> pkg install <span class="flag">-y</span> <span class="pkg">metasploit</span></span><br>
+        <span class="prompt">$</span><span class="cmd"> msfconsole</span><br><br>
+        <span class="section">── HYDRA (password testing on your own systems) ──</span>
+        <span class="prompt">$</span><span class="cmd"> pkg install <span class="flag">-y</span> <span class="pkg">hydra</span></span><br>
+        <span class="prompt">$</span><span class="cmd"> hydra <span class="flag">-l</span> admin <span class="flag">-P</span> /usr/share/wordlists/rockyou.txt localhost http-post-form</span><br><br>
+        <span class="section">── WORDLISTS + TOOLS ──</span>
+        <span class="prompt">$</span><span class="cmd"> pkg install <span class="flag">-y</span> <span class="pkg">john hashcat aircrack-ng</span></span><br>
+        <span class="prompt">$</span><span class="cmd"> git clone https://github.com/danielmiessler/SecLists.git ~/wordlists</span><br><br>
+        <span class="section">── NETWORK MONITOR ──</span>
+        <span class="prompt">$</span><span class="cmd"> pkg install <span class="flag">-y</span> <span class="pkg">tcpdump wireshark-cli</span></span><br>
+        <span class="prompt">$</span><span class="cmd"> tcpdump <span class="flag">-i any -w</span> capture.pcap</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════ PHASE 5: AI / OFFLINE MODELS ══════════════ -->
+  <div class="phase theme-purple">
+    <div class="phase-header">
+      <div class="phase-num">05</div>
+      <div>
+        <div class="phase-title">🧠 AI / Offline LLM Models</div>
+        <div class="phase-desc">// TinyLlama · Phi-2 · Whisper · Stable Diffusion lite</div>
+      </div>
+    </div>
+
+    <div class="cmd-block">
+      <div class="cmd-header">
+        <div class="cmd-label"><div class="cmd-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div> ai-engine.sh</div>
+        <button class="copy-btn" onclick="copyCmd(this, 'ai')">COPY</button>
+      </div>
+      <div class="cmd-body" id="ai">
+        <span class="section">── OLLAMA (easiest LLM runner) ──</span>
+        <span class="prompt">$</span><span class="cmd"> curl <span class="flag">-fsSL</span> https://ollama.ai/install.sh | sh</span><br>
+        <span class="prompt">$</span><span class="cmd"> ollama serve &</span><br>
+        <span class="prompt">$</span><span class="cmd"> ollama pull tinyllama</span><span class="comment">  # 638MB, runs on 2GB RAM</span><br>
+        <span class="prompt">$</span><span class="cmd"> ollama pull phi</span><span class="comment">  # Microsoft Phi-2, very capable</span><br>
+        <span class="prompt">$</span><span class="cmd"> ollama run tinyllama <span class="str">"Write a Python API for me"</span></span><br><br>
+        <span class="section">── LLAMA.CPP (raw model runner) ──</span>
+        <span class="prompt">$</span><span class="cmd"> git clone https://github.com/ggerganov/llama.cpp && cd llama.cpp</span><br>
+        <span class="prompt">$</span><span class="cmd"> make <span class="flag">-j4</span></span><br>
+        <span class="comment"># Download GGUF model from HuggingFace then:</span><br>
+        <span class="prompt">$</span><span class="cmd"> ./main <span class="flag">-m</span> models/tinyllama.gguf <span class="flag">-p</span> <span class="str">"Hello, how are you?"</span> <span class="flag">-n</span> 256</span><br><br>
+        <span class="section">── WHISPER (speech to text) ──</span>
+        <span class="prompt">$</span><span class="cmd"> pip install <span class="pkg">openai-whisper</span></span><br>
+        <span class="prompt">$</span><span class="cmd"> whisper audio.mp3 <span class="flag">--model</span> tiny</span><br><br>
+        <span class="section">── AI PYTHON LIBS ──</span>
+        <span class="prompt">$</span><span class="cmd"> pip install <span class="pkg">transformers torch sentence-transformers</span></span><br>
+        <span class="prompt">$</span><span class="cmd"> pip install <span class="pkg">langchain chromadb ollama</span></span><br><br>
+        <span class="section">── BUILD AI ASSISTANT ──</span>
+        <span class="prompt">$</span><span class="cmd"> pip install <span class="pkg">ollama rich</span></span><br>
+        <span class="comment"># Create assistant.py → use ollama python library → stream responses</span>
+      </div>
+    </div>
+
+    <div class="tip">🧠 Best models for Android (4GB RAM): TinyLlama-1.1B (Q4), Phi-2 (Q4), Mistral-7B with Q2 quant. Always use GGUF format.</div>
+  </div>
+
+  <!-- ══════════════ PHASE 6: DATABASE ══════════════ -->
+  <div class="phase theme-cyan">
+    <div class="phase-header">
+      <div class="phase-num">06</div>
+      <div>
+        <div class="phase-title">🗄️ Database + Backend Systems</div>
+        <div class="phase-desc">// MariaDB · PostgreSQL · Redis · MongoDB · CRM · SaaS</div>
+      </div>
+    </div>
+
+    <div class="cmd-block">
+      <div class="cmd-header">
+        <div class="cmd-label"><div class="cmd-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div> databases.sh</div>
+        <button class="copy-btn" onclick="copyCmd(this, 'db')">COPY</button>
+      </div>
+      <div class="cmd-body" id="db">
+        <span class="section">── MARIADB (MySQL) ──</span>
+        <span class="prompt">$</span><span class="cmd"> pkg install <span class="flag">-y</span> <span class="pkg">mariadb</span></span><br>
+        <span class="prompt">$</span><span class="cmd"> mysql_install_db && mysqld_safe &</span><br>
+        <span class="prompt">$</span><span class="cmd"> mysql <span class="flag">-u</span> root <span class="flag">-e</span> <span class="str">"CREATE DATABASE saas_db; CREATE USER 'dev'@'localhost' IDENTIFIED BY 'password123'; GRANT ALL ON saas_db.* TO 'dev'@'localhost';"</span></span><br><br>
+        <span class="section">── POSTGRESQL ──</span>
+        <span class="prompt">$</span><span class="cmd"> pkg install <span class="flag">-y</span> <span class="pkg">postgresql</span></span><br>
+        <span class="prompt">$</span><span class="cmd"> initdb $PREFIX/var/lib/postgresql</span><br>
+        <span class="prompt">$</span><span class="cmd"> pg_ctl <span class="flag">-D</span> $PREFIX/var/lib/postgresql start</span><br>
+        <span class="prompt">$</span><span class="cmd"> createdb mydb && psql mydb</span><br><br>
+        <span class="section">── REDIS (cache + queues) ──</span>
+        <span class="prompt">$</span><span class="cmd"> pkg install <span class="flag">-y</span> <span class="pkg">redis</span></span><br>
+        <span class="prompt">$</span><span class="cmd"> redis-server &</span><br>
+        <span class="prompt">$</span><span class="cmd"> redis-cli ping</span><span class="comment">  # should return PONG</span><br><br>
+        <span class="section">── SQLITE (zero config) ──</span>
+        <span class="prompt">$</span><span class="cmd"> pkg install <span class="flag">-y</span> <span class="pkg">sqlite</span></span><br>
+        <span class="prompt">$</span><span class="cmd"> sqlite3 mydb.db <span class="str">"CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT, email TEXT);"</span></span><br><br>
+        <span class="section">── DB MANAGEMENT UI ──</span>
+        <span class="prompt">$</span><span class="cmd"> pip install <span class="pkg">datasette</span></span><br>
+        <span class="prompt">$</span><span class="cmd"> datasette mydb.db</span><span class="comment">  # web UI on port 8001</span><br><br>
+        <span class="section">── BACKUP SCRIPT ──</span>
+        <span class="prompt">$</span><span class="cmd"> mysqldump <span class="flag">-u</span> root <span class="flag">--all-databases</span> > ~/backup_$(date +%Y%m%d).sql</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════ PHASE 7: DEVOPS ══════════════ -->
+  <div class="phase theme-green">
+    <div class="phase-header">
+      <div class="phase-num">07</div>
+      <div>
+        <div class="phase-title">📦 DevOps — Git · Docker · SSH · CI/CD</div>
+        <div class="phase-desc">// Real engineering workflows on Android</div>
+      </div>
+    </div>
+
+    <div class="cmd-block">
+      <div class="cmd-header">
+        <div class="cmd-label"><div class="cmd-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div> devops.sh</div>
+        <button class="copy-btn" onclick="copyCmd(this, 'devops')">COPY</button>
+      </div>
+      <div class="cmd-body" id="devops">
+        <span class="section">── GIT SETUP ──</span>
+        <span class="prompt">$</span><span class="cmd"> pkg install <span class="flag">-y</span> <span class="pkg">git gh</span></span><br>
+        <span class="prompt">$</span><span class="cmd"> git config <span class="flag">--global</span> user.name <span class="str">"YourName"</span></span><br>
+        <span class="prompt">$</span><span class="cmd"> git config <span class="flag">--global</span> user.email <span class="str">"you@email.com"</span></span><br>
+        <span class="prompt">$</span><span class="cmd"> git config <span class="flag">--global</span> core.editor nano</span><br>
+        <span class="prompt">$</span><span class="cmd"> ssh-keygen <span class="flag">-t</span> ed25519 <span class="flag">-C</span> <span class="str">"you@email.com"</span></span><br>
+        <span class="prompt">$</span><span class="cmd"> cat ~/.ssh/id_ed25519.pub</span><span class="comment">  # copy to GitHub SSH keys</span><br><br>
+        <span class="section">── DOCKER (via proot-distro) ──</span>
+        <span class="prompt">$</span><span class="cmd"> pkg install <span class="flag">-y</span> <span class="pkg">proot-distro</span></span><br>
+        <span class="prompt">$</span><span class="cmd"> proot-distro install ubuntu</span><br>
+        <span class="prompt">$</span><span class="cmd"> proot-distro login ubuntu</span><br>
+        <span class="comment"># Inside Ubuntu: install Docker normally</span><br>
+        <span class="prompt">(ubuntu)$</span><span class="cmd"> apt install docker.io <span class="flag">-y</span></span><br><br>
+        <span class="section">── SSH SERVER (control phone from laptop) ──</span>
+        <span class="prompt">$</span><span class="cmd"> sshd</span><span class="comment">  # starts SSH on port 8022</span><br>
+        <span class="prompt">$</span><span class="cmd"> whoami && ip addr show wlan0</span><span class="comment">  # get your phone's IP</span><br>
+        <span class="comment"># From laptop: ssh -p 8022 username@PHONE_IP</span><br><br>
+        <span class="section">── GITHUB ACTIONS RUNNER (CI/CD) ──</span>
+        <span class="prompt">$</span><span class="cmd"> gh auth login</span><br>
+        <span class="prompt">$</span><span class="cmd"> gh repo create myproject <span class="flag">--public</span></span><br>
+        <span class="prompt">$</span><span class="cmd"> gh workflow run</span><br><br>
+        <span class="section">── MONITORING ──</span>
+        <span class="prompt">$</span><span class="cmd"> pkg install <span class="flag">-y</span> <span class="pkg">htop neofetch termux-api</span></span><br>
+        <span class="prompt">$</span><span class="cmd"> htop</span><span class="comment">  # real-time resource monitor</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════ PHASE 8: APK BACKEND ══════════════ -->
+  <div class="phase theme-orange">
+    <div class="phase-header">
+      <div class="phase-num">08</div>
+      <div>
+        <div class="phase-title">📱 APK / App Backend — Mobile API Server</div>
+        <div class="phase-desc">// Build REST/GraphQL APIs · connect apps · JWT auth</div>
+      </div>
+    </div>
+
+    <div class="cmd-block">
+      <div class="cmd-header">
+        <div class="cmd-label"><div class="cmd-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div> mobile-backend.sh</div>
+        <button class="copy-btn" onclick="copyCmd(this, 'mobile')">COPY</button>
+      </div>
+      <div class="cmd-body" id="mobile">
+        <span class="section">── REST API WITH FASTAPI ──</span>
+        <span class="prompt">$</span><span class="cmd"> pip install <span class="pkg">fastapi uvicorn pyjwt python-multipart passlib[bcrypt]</span></span><br>
+        <span class="comment"># Create full auth API with JWT, users, routes</span><br>
+        <span class="prompt">$</span><span class="cmd"> uvicorn main:app <span class="flag">--host</span> 0.0.0.0 <span class="flag">--port</span> 8000 <span class="flag">--reload</span></span><br><br>
+        <span class="section">── GRAPHQL WITH STRAWBERRY ──</span>
+        <span class="prompt">$</span><span class="cmd"> pip install <span class="pkg">strawberry-graphql[fastapi]</span></span><br><br>
+        <span class="section">── WEBSOCKET SERVER ──</span>
+        <span class="prompt">$</span><span class="cmd"> pip install <span class="pkg">websockets</span></span><br>
+        <span class="comment"># Real-time chat/notifications for your app</span><br><br>
+        <span class="section">── PUSH NOTIFICATIONS ──</span>
+        <span class="prompt">$</span><span class="cmd"> pip install <span class="pkg">firebase-admin</span></span><br>
+        <span class="comment"># Connect Firebase → send push to Android/iOS apps</span><br><br>
+        <span class="section">── EXPOSE TO INTERNET ──</span>
+        <span class="prompt">$</span><span class="cmd"> ./ngrok http 8000</span><span class="comment">  # public URL for your API</span><br>
+        <span class="comment"># Or use Cloudflare Tunnel (free, no limits):</span><br>
+        <span class="prompt">$</span><span class="cmd"> wget https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-arm</span><br>
+        <span class="prompt">$</span><span class="cmd"> chmod +x cloudflared-linux-arm</span><br>
+        <span class="prompt">$</span><span class="cmd"> ./cloudflared-linux-arm tunnel <span class="flag">--url</span> http://localhost:8000</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════ BONUS: PRO ALIASES ══════════════ -->
+  <div class="phase theme-purple">
+    <div class="phase-header">
+      <div class="phase-num">⚡</div>
+      <div>
+        <div class="phase-title">PRO .zshrc — Aliases & Power Config</div>
+        <div class="phase-desc">// Paste into ~/.zshrc — reload with: source ~/.zshrc</div>
+      </div>
+    </div>
+
+    <div class="cmd-block">
+      <div class="cmd-header">
+        <div class="cmd-label"><div class="cmd-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div> ~/.zshrc — pro config</div>
+        <button class="copy-btn" onclick="copyCmd(this, 'zshrc')">COPY</button>
+      </div>
+      <div class="cmd-body" id="zshrc">
+        <span class="comment"># ═══ PASTE THIS INTO ~/.zshrc ═══</span><br><br>
+        <span class="comment"># Aliases</span><br>
+        <span class="cmd">alias ll=<span class="str">'ls -la --color=auto'</span></span><br>
+        <span class="cmd">alias py=<span class="str">'python3'</span></span><br>
+        <span class="cmd">alias nr=<span class="str">'npm run'</span></span><br>
+        <span class="cmd">alias gs=<span class="str">'git status'</span></span><br>
+        <span class="cmd">alias gc=<span class="str">'git commit -m'</span></span><br>
+        <span class="cmd">alias gp=<span class="str">'git push'</span></span><br>
+        <span class="cmd">alias serve=<span class="str">'python3 -m http.server 8080'</span></span><br>
+        <span class="cmd">alias myip=<span class="str">'ip addr show wlan0 | grep "inet " | awk "{print $2}"'</span></span><br>
+        <span class="cmd">alias ports=<span class="str">'netstat -tulpn'</span></span><br>
+        <span class="cmd">alias startdb=<span class="str">'mysqld_safe --datadir=$PREFIX/var/lib/mysql &'</span></span><br>
+        <span class="cmd">alias startnginx=<span class="str">'nginx'</span></span><br>
+        <span class="cmd">alias killall-servers=<span class="str">'pkill -f "python|node|nginx|mysqld"'</span></span><br><br>
+        <span class="comment"># Show system info on start</span><br>
+        <span class="cmd">neofetch</span><br><br>
+        <span class="comment"># Better history</span><br>
+        <span class="cmd">HISTSIZE=10000</span><br>
+        <span class="cmd">SAVEHIST=10000</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  <div class="wrapper">
+    <div style="font-size:22px;margin-bottom:8px">⚡</div>
+    TERMUX PRO BEAST — BUILT FOR ENGINEERS WHO DON'T STOP<br>
+    <span style="color:var(--green)">// from bootstrap to production — all from your Android</span>
+  </div>
+</footer>
+
+<script>
+  // Scroll progress bar
+  window.addEventListener('scroll', () => {
+    const scrolled = (window.scrollY / (document.body.scrollHeight - window.innerHeight)) * 100;
+    document.getElementById('progress').style.width = scrolled + '%';
+  });
+
+  // Copy command function
+  function copyCmd(btn, id) {
+    const el = document.getElementById(id);
+    // Extract plain text from the command block
+    const lines = el.querySelectorAll('span');
+    let text = el.innerText || el.textContent;
+    
+    // Clean up: remove prompt symbols and get just commands
+    const rawLines = text.split('\n');
+    const cleaned = rawLines
+      .filter(l => l.trim())
+      .map(l => l.replace(/^\$\s*/, '').replace(/^#/, '#').trim())
+      .join('\n');
+    
+    navigator.clipboard.writeText(cleaned).then(() => {
+      btn.textContent = '✓ COPIED';
+      btn.classList.add('copied');
+      setTimeout(() => {
+        btn.textContent = 'COPY';
+        btn.classList.remove('copied');
+      }, 2000);
+    }).catch(() => {
+      // Fallback
+      const ta = document.createElement('textarea');
+      ta.value = cleaned;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      btn.textContent = '✓ COPIED';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = 'COPY'; btn.classList.remove('copied'); }, 2000);
+    });
+  }
+</script>
+</body>
+</html>
